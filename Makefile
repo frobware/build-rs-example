@@ -1,6 +1,7 @@
 # Detect version from git tags, fallback to "unknown".
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "unknown")
 TARBALL := build-rs-example-$(VERSION).tar.gz
+TESTDIR := $(shell mkdir -d)
 
 .PHONY: all tarball test clean
 
@@ -12,10 +13,9 @@ tarball:
 
 # Self-test: Extract, build, and check version output
 test: tarball
-	tmpdir=$$(mktemp -d) && \
-	echo "Running tests in $tmpdir" && \
-	tar -xzf $(TARBALL) -C $$tmpdir && \
-	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $$tmpdir
+	echo "Running tests in $(TESTDIR)" && \
+	tar -xzf $(TARBALL) -C $(TESTDIR) && \
+	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $(TESTDIR)
 
 # Clean tarball
 clean:
