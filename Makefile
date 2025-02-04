@@ -12,12 +12,10 @@ tarball:
 
 # Self-test: Extract, build, and check version output
 test: tarball
-	@echo "=== Extracting tarball to a temporary directory ==="
-	set -x && \
 	tmpdir=$$(mktemp -d) && \
 	echo "Using temp directory: $$tmpdir" && \
 	tar -xzf $(TARBALL) -C $$tmpdir && \
-	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && ls -r $$tmpdir
+	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $$tmpdir
 
 # Clean tarball
 clean:
