@@ -7,13 +7,13 @@ TARBALL := build-rs-example-$(VERSION).tar.gz
 all: tarball test
 
 tarball:
-	@echo "=== Creating source tarball using git archive ==="
+	@echo "Creating source tarball using git archive"
 	git archive --format=tar.gz --prefix=build-rs-example-$(VERSION)/ -o $(TARBALL) HEAD
 
 # Self-test: Extract, build, and check version output
 test: tarball
 	tmpdir=$$(mktemp -d) && \
-	echo "Using temp directory: $$tmpdir" && \
+	echo "Running tessts in $$tmpdir" && \
 	tar -xzf $(TARBALL) -C $$tmpdir && \
 	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $$tmpdir
 
