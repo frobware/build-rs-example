@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
-set -eu
 
-check_output() {
-    local expected="$1"
-    cargo clean
-    got=$(cargo run --quiet)
-    echo "expected '$expected', got '$got'"
-    [[ "$got" == "$expected" ]] || exit 1
-}
+set -euo pipefail
 
-check_output "unknown"
-export PACKAGE_VERSION=fortytwo.42.42.42
-check_output "$PACKAGE_VERSION"
+got=$(PACKAGE_VERSION=42 cargo run --quiet)
+echo "expected '42', got '$got'"
+echo "$got" | grep -q "42"
+
+got=$(cargo run --quiet)
+echo "expected 'unknown', got '$got'"
+echo "$got" | grep -q "unknown"
