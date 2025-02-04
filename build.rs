@@ -43,6 +43,7 @@ use std::process::Command;
 fn main() {
     // Informs Cargo that `build.rs` should rerun if it changes.
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-env-changed=PACKAGE_VERSION");
 
     // Determine the version from Git, commit hash, or fallback
     // methods.
