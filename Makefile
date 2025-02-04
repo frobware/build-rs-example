@@ -17,7 +17,7 @@ test: tarball
 	tmpdir=$$(mktemp -d) && \
 	echo "Using temp directory: $$tmpdir" && \
 	tar -xzf $(TARBALL) -C $$tmpdir && \
-	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $$tmpdir
+	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && ls -r $$tmpdir
 
 # Clean tarball
 clean:
