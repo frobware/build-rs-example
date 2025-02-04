@@ -15,7 +15,7 @@ tarball:
 test: tarball
 	echo "Running tests in $(TESTDIR)" && \
 	tar -xzf $(TARBALL) -C $(TESTDIR) && \
-	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $(TESTDIR)
+	cd $(TESTDIR)/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $(TESTDIR)
 
 # Clean tarball
 clean:
