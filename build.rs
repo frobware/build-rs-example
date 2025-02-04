@@ -36,9 +36,9 @@
 //! - `1.2.3` (when built from a tarball with `PACKAGE_VERSION=1.2.3`)
 //! - `unknown` (fallback if all methods fail)
 
-use std::env;
-use std::fs;
-use std::process::Command;
+use std::{env, fs, process::Command};
+
+use chrono::Utc;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
@@ -56,16 +56,7 @@ fn main() {
     println!("Generating version.rs at: {}", version_file);
 
     let rustc_version = get_rustc_version().unwrap_or_else(|| "".to_string());
-
-    // Get build timestamp using the `date` command to avoid external
-    // dependencies (chrono). This requires a Unix-like system with
-    // `date`. If missing, falls back to "unknown time".
-    let timestamp = Command::new("date")
-        .arg("-u")
-        .arg("+%Y-%m-%dT%H:%M:%SZ")
-        .output()
-        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_string())
-        .unwrap_or_else(|_| "unknown time".to_string());
+    let timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
     if let Err(e) = fs::write(
         &version_file,
