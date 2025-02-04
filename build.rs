@@ -39,7 +39,6 @@
 use std::env;
 use std::fs;
 use std::process::Command;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
@@ -56,34 +55,18 @@ fn main() {
 
     println!("Generating version.rs at: {}", version_file);
 
-    let rustc_version = get_rustc_version()
-        .unwrap_or_else(|| "".to_string());
+    let rustc_version = get_rustc_version().unwrap_or_else(|| "".to_string());
 
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| {
-            let secs = d.as_secs();
-            let days = secs / 86400;
-            let secs_remaining = secs % 86400;
-            let hours = secs_remaining / 3600;
-            let mins = (secs_remaining % 3600) / 60;
-            let secs = secs_remaining % 60;
-
-            let days_since_epoch = days + 719163; // Days from 0000 to 1970
-            let year = (400 * days_since_epoch + 97) / 146097;
-            let days_of_year = days_since_epoch - (365 * year + year/4 - year/100 + year/400);
-            let month = (5 * days_of_year + 2) / 153;
-            let day = days_of_year - (153 * month + 2) / 5 + 1;
-            let month = month + 3;
-            let year = year + (month > 12) as u64;
-            let month = if month > 12 { month - 12 } else { month };
-
-            format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-                    year, month, day, hours, mins, secs)
-        })
+    // Get build timestamp using the `date` command to avoid external
+    // dependencies (chrono). This requires a Unix-like system with
+    // `date`. If missing, falls back to "unknown time".
+    let timestamp = Command::new("date")
+        .arg("-u")
+        .arg("+%Y-%m-%dT%H:%M:%SZ")
+        .output()
+        .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_string())
         .unwrap_or_else(|_| "unknown time".to_string());
 
-    // Write the generated version information to `version.rs`
     if let Err(e) = fs::write(
         &version_file,
         format!(
@@ -171,10 +154,7 @@ fn get_git_uncommitted() -> Option<String> {
 }
 
 fn get_rustc_version() -> Option<String> {
-    let output = Command::new("rustc")
-        .arg("--version")
-        .output()
-        .ok()?;
+    let output = Command::new("rustc").arg("--version").output().ok()?;
 
     if !output.status.success() {
         eprintln!("rustc --version failed: {:?}", output.status);
