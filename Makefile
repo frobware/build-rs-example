@@ -13,7 +13,7 @@ tarball:
 # Self-test: Extract, build, and check version output
 test: tarball
 	tmpdir=$$(mktemp -d) && \
-	echo "Running tessts in $$tmpdir" && \
+	echo "Running tests in $tmpdir" && \
 	tar -xzf $(TARBALL) -C $$tmpdir && \
 	cd $$tmpdir/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $$tmpdir
 
