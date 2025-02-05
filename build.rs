@@ -55,7 +55,7 @@ fn main() {
 
     println!("Generating version.rs at: {}", version_file);
 
-    let rustc_version = get_rustc_version().unwrap_or_else(|| "".to_string());
+    let rustc_version = get_rustc_version().unwrap_or_default();
     let timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
 
     if let Err(e) = fs::write(
