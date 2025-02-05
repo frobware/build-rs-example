@@ -15,9 +15,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Get tags
-        run: git fetch --tags origin
+        with:
+          # https://github.com/actions/checkout/issues/1467
+          fetch-depth: 1
+          fetch-tags: true
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
