@@ -22,7 +22,6 @@ jobs:
 
       - name: Fetch Git Tags
         run: git fetch origin 'refs/tags/*:refs/tags/*'
-        run: git describe --tags --always --dirty
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
