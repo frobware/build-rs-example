@@ -28,6 +28,9 @@ jobs:
       - name: Cargo Build
         run: cargo build --release
 
+      - name: Git Describe
+        run: git describe --tags --always --dirty
+
       - name: Cargo Run
         run: cargo run --release --quiet || (echo "Cargo run failed" && exit 1)
 
