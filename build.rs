@@ -36,10 +36,6 @@ fn get_git_version() -> Option<String> {
             commit_hash
         });
 
-    let Some(commit_hash) = commit_hash else {
-        return None;
-    };
-
     let is_dirty = Command::new("git")
         .args(["status", "--porcelain"])
         .output()
@@ -47,7 +43,7 @@ fn get_git_version() -> Option<String> {
         .unwrap_or(false);
 
     let dirty_suffix = if is_dirty { "-dirty" } else { "" };
-    Some(format!("{}{}", commit_hash, dirty_suffix))
+    Some(format!("{}{}", commit_hash?, dirty_suffix))
 }
 
 /// Gets the Rust toolchain version.
@@ -69,7 +65,7 @@ fn set_build_version() {
 
     let mut full_version = version.clone();
 
-    full_version.push_str(&format!(" ("));
+    full_version.push_str(" (");
 
     if let Some(git) = git_version {
         full_version.push_str(&format!("{git} "));
