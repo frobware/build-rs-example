@@ -32,8 +32,9 @@ jobs:
           echo "Git describe version: $GIT_VERSION"
 
           if ! echo "$GIT_VERSION" | grep -q "^$CARGO_VERSION"; then
-            echo "Version mismatch! Cargo.toml ($CARGO_VERSION) does not match Git describe ($GIT_VERSION)"
-          exit 1
+            echo "Version mismatch! Cargo.toml ($CARGO_VERSION) does not match Git describe ($GIT_VERSION)" >&2
+            exit 1
+          fi
 
       - name: Ensure working tree is clean before build
         run: |
