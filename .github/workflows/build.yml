@@ -19,6 +19,14 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Ensure working tree is clean before build
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Uncommitted changes or untracked files detected!"
+            git status
+            exit 1
+          fi
+
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y jq
 
@@ -35,9 +43,21 @@ jobs:
         run: git describe --tags --always --dirty
 
       - name: Cargo Run
-        run: cargo run --release --quiet || (echo "Cargo run failed" && exit 1)
+        run: |
+          output=$(cargo run --release --quiet)
+          echo "Cargo output: $output"
+          if echo "$output" | grep -q -- '-dirty'; then
+            echo "CI build should not be dirty!"
+            exit 1
+          fi
+
+      - name: Ensure working tree is clean after build
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "The build modified files (e.g., Cargo.lock)!"
+            git status
+            exit 1
+          fi
 
       - name: Run Self-Tests
         run: make test
-
-
