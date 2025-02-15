@@ -1,161 +1,85 @@
-//! `build.rs` - Generates a version string at compile time.
+//! `build.rs` - Generates a full version string at compile time.
 //!
 //! ## Purpose:
-//! This script extracts the version information from Git at build time
-//! and writes it to `version.rs`, which is included in the final
-//! binary.
-//!
-//! This allows the binary to display version information dynamically,
-//! even when built from different commits or branches.
-//!
-//! ## Integration with Cargo:
-//! - Cargo automatically runs `build.rs` **before compilation** if it
-//!   exists.
-//! - The script writes `version.rs` inside `OUT_DIR` (a Cargo build
-//!   directory).
-//! - `main.rs` or other sources can then
-//!   `include!(concat!(env!("OUT_DIR"), "/version.rs"))`.
+//! This script extracts version information (Git, Rust version, build date)
+//! at compile time and sets it as `BUILD_VERSION`.
 //!
 //! ## Behaviour:
-//! - If a Git tag exists, it uses:
-//!   `git describe --tags --always --dirty`.
-//! - If no tags exist, it falls back to the latest commit hash
-//!   (`git rev-parse HEAD`).
-//! - If the repository is initialised but has no commits, it returns
-//!   `"uncommitted"`.
-//! - If Git is unavailable (e.g., tarball builds), it checks for
-//!   `PACKAGE_VERSION`.
-//! - If all else fails, it returns `"unknown"`.
-//!
-//! ## Example Version Outputs:
-//! - `0.1.0` (exactly on a tag)
-//! - `0.1.0-5-gabcdef1` (5 commits after a tag, on commit `abcdef1`)
-//! - `gabcdef1` (no tags, using commit hash)
-//! - `gabcdef1-dirty` (repository has local uncommitted changes)
-//! - `uncommitted` (repo exists but has no commits)
-//! - `1.2.3` (when built from a tarball with `PACKAGE_VERSION=1.2.3`)
-//! - `unknown` (fallback if all methods fail)
-
-use std::{env, fs, process::Command};
+//! - Uses `CARGO_PKG_VERSION` as the base version.
+//! - If Git is available, it appends:
+//!   - The latest commit hash (`git rev-parse --short=10 HEAD`).
+//!   - The dirty state if there are uncommitted changes.
+//! - If Git is unavailable (e.g., tarball builds), Git info is omitted.
+//! - The build date and Rust version are always included.
 
 use chrono::Utc;
+use std::{env, process::Command};
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-env-changed=PACKAGE_VERSION");
-
-    let version = get_git_version()
-        .or_else(get_git_commit_hash) // If no tags, fallback to commit hash
-        .or_else(get_git_uncommitted) // If repo exists but has no commits
-        .or_else(|| env::var("PACKAGE_VERSION").ok()) // Tarball builds (no .git)
-        .unwrap_or_else(|| "unknown".to_string());
-
-    let out_dir = env::var("OUT_DIR").expect("OUT_DIR not set by Cargo!");
-    let version_file = format!("{}/version.rs", out_dir);
-
-    println!("Generating version.rs at: {}", version_file);
-
-    let rustc_version = get_rustc_version().unwrap_or_default();
-    let timestamp = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-
-    if let Err(e) = fs::write(
-        &version_file,
-        format!(
-            "pub const BUILD_VERSION: &str = \"{}\";\n\
-             pub const BUILD_TOOLCHAIN_VERSION: &str = \"{}\";\n\
-             pub const BUILD_DATE: &str = \"{}\";\n",
-            version, rustc_version, timestamp
-        ),
-    ) {
-        eprintln!("Failed to write version.rs: {}", e);
-    }
+    set_build_version();
 }
 
-/// Attempts to get the latest version from Git tags. Uses
-/// `git describe --tags --always --dirty` to generate a human-friendly
-/// version.
+/// Gets the Git commit hash and dirty status.
+/// Returns `None` if Git is unavailable.
 fn get_git_version() -> Option<String> {
-    eprintln!("get_git_version");
-
-    let output = Command::new("git")
-        .args(["describe", "--tags", "--always", "--dirty", "--abbrev=7"])
+    let commit_hash = Command::new("git")
+        .args(["rev-parse", "--short=10", "HEAD"])
         .output()
-        .ok()?;
+        .ok()
+        .filter(|output| output.status.success())
+        .and_then(|output| {
+            let commit_hash = String::from_utf8(output.stdout)
+                .ok()
+                .map(|s| s.trim().to_string());
 
-    if !output.status.success() {
-        eprintln!("git describe failed: {:?}", output.status);
+            commit_hash
+        });
+
+    let Some(commit_hash) = commit_hash else {
         return None;
-    }
+    };
 
-    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if version.is_empty() {
-        None
-    } else {
-        Some(version)
-    }
+    let is_dirty = Command::new("git")
+        .args(["status", "--porcelain"])
+        .output()
+        .map(|out| !out.stdout.is_empty())
+        .unwrap_or(false);
+
+    let dirty_suffix = if is_dirty { "-dirty" } else { "" };
+    Some(format!("{}{}", commit_hash, dirty_suffix))
 }
 
-/// Fallback method: Gets the current commit hash. Uses
-/// `git rev-parse HEAD` to return the latest commit hash (shortened).
-fn get_git_commit_hash() -> Option<String> {
-    eprintln!("get_git_commit_hash");
-
-    let output = Command::new("git")
-        .args(["rev-parse", "--short=7", "HEAD"])
-        .output()
-        .ok()?;
-
-    if !output.status.success() {
-        eprintln!("git rev-parse HEAD failed: {:?}", output.status);
-        return None;
-    }
-
-    let hash = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if hash.is_empty() {
-        None
-    } else {
-        Some(hash)
-    }
-}
-
-/// Detects an empty Git repository (no commits yet). If the repository
-/// exists but has no commits, return `"uncommitted"`.
-fn get_git_uncommitted() -> Option<String> {
-    eprintln!("get_git_uncommitted");
-
-    let output = Command::new("git")
-        .args(["rev-parse", "--is-inside-work-tree"])
-        .output()
-        .ok()?;
-
-    if !output.status.success() {
-        eprintln!(
-            "git rev-parse --is-inside-work-tree failed: {:?}",
-            output.status
-        );
-        return None;
-    }
-
-    let is_git_repo = String::from_utf8_lossy(&output.stdout).trim() == "true";
-    if is_git_repo {
-        Some("uncommitted".to_string()) // No commits yet
-    } else {
-        None
-    }
-}
-
+/// Gets the Rust toolchain version.
 fn get_rustc_version() -> Option<String> {
-    let output = Command::new("rustc").arg("--version").output().ok()?;
+    Command::new("rustc")
+        .arg("--version")
+        .output()
+        .ok()
+        .and_then(|output| String::from_utf8(output.stdout).ok())
+        .map(|s| s.trim().to_string())
+}
 
-    if !output.status.success() {
-        eprintln!("rustc --version failed: {:?}", output.status);
-        return None;
+/// Sets `BUILD_VERSION`, the single authoritative version string.
+fn set_build_version() {
+    let build_date = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let git_version = get_git_version();
+    let rustc_version = get_rustc_version();
+    let version = env!("CARGO_PKG_VERSION").to_string();
+
+    let mut full_version = version.clone();
+
+    full_version.push_str(&format!(" ("));
+
+    if let Some(git) = git_version {
+        full_version.push_str(&format!("{git} "));
     }
 
-    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if version.is_empty() {
-        None
-    } else {
-        Some(version)
+    full_version.push_str(&format!("{build_date})"));
+
+    if let Some(rustc) = rustc_version {
+        full_version.push_str(&format!(" {rustc}"));
     }
+
+    println!("cargo:rustc-env=BUILD_VERSION={}", full_version);
 }

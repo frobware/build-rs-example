@@ -1,22 +1,18 @@
-# Detect version from git tags, fallback to "unknown".
-VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "unknown")
-TARBALL := build-rs-example-$(VERSION).tar.gz
+VERSION := $(shell cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+TARBALL := $(shell mktemp --tmpdir build-rs-example-$(VERSION)-XXXXXXXX.tar)
 TESTDIR := $(shell mktemp -d)
 
-.PHONY: all tarball test clean
+run:
+	cargo run --quiet
 
-all: tarball test
+# Self-test: Extract, build, and check version output.
+test: run tarball
+	./test.sh $(TARBALL) "build-rs-example $(VERSION)"
 
+# Create a versioned tarball, excluding unnecessary files. We don't
+# use git archive because, in development, we want to pick up
+# uncommitted changes.
 tarball:
-	@echo "Creating source tarball using git archive"
-	git archive --format=tar.gz --prefix=build-rs-example-$(VERSION)/ -o $(TARBALL) HEAD
+	tar -cf $(TARBALL) --exclude=.git --exclude=target *
 
-# Self-test: Extract, build, and check version output
-test: tarball
-	echo "Running tests in $(TESTDIR)" && \
-	tar -xzf $(TARBALL) -C $(TESTDIR) && \
-	cd $(TESTDIR)/build-rs-example-$(VERSION) && ./test.sh && $(RM) -r $(TESTDIR)
-
-# Clean tarball
-clean:
-	rm -f $(TARBALL)
+.PHONY: run test tarball
