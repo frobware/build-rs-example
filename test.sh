@@ -18,7 +18,7 @@ fi
 testdir=$(mktemp -d)
 trap 'rm -rf "$testdir"' EXIT
 
-tar --extract --gzip --file "$tarball" --directory "$testdir"
+tar --extract --file "$tarball" --directory "$testdir"
 cd "$testdir"
 
 # Force a rebuild; a precautionary measure to prevent tarballs from
