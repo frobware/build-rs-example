@@ -23,6 +23,18 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Ensure Cargo.toml version matches Git describe
+        run: |
+          CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          GIT_VERSION=$(git describe --tags --always --dirty)
+
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Git describe version: $GIT_VERSION"
+
+          if ! echo "$GIT_VERSION" | grep -q "^$CARGO_VERSION"; then
+            echo "Version mismatch! Cargo.toml ($CARGO_VERSION) does not match Git describe ($GIT_VERSION)"
+          exit 1
+
       - name: Ensure working tree is clean before build
         run: |
           if [ -n "$(git status --porcelain)" ]; then
