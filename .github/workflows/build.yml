@@ -20,6 +20,9 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Git Describe
+        run: git describe --tags --always --dirty
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
