@@ -23,7 +23,6 @@ test: clippy tarball
 # use `git archive` because, in development, we want to pick up
 # uncommitted changes.
 tarball:
-	cargo clean
 	tar -cf $(TARBALL) --exclude=.git --exclude=target *
 
 .PHONY: all fmt clippy build run tarball test

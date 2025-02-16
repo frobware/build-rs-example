@@ -35,23 +35,26 @@ jobs:
           if ! echo "$GIT_VERSION" | grep -q "^$CARGO_VERSION"; then
             echo "::warning file=Cargo.toml,line=1,col=1::Version mismatch! Cargo.toml ($CARGO_VERSION) does not match Git describe ($GIT_VERSION)"
           fi
+      - name: Format check
+        run: make fmt
 
-      - name: Run Formatting, Clippy, and Build
-        run: make fmt clippy build
+      - name: Run Clippy
+        run: make clippy
 
-      - name: Run Self-Tests
-        run: make test
+      - name: Build project
+        run: make build
 
-      - name: Run Binary and Verify Clean Build
+      - name: Run Binary
         run: |
-          output=$(cargo run --release --quiet)
+          output=$(make run)
           echo "Cargo output: $output"
           if echo "$output" | grep -q -- '-dirty'; then
             echo "CI build should not be dirty!"
             exit 1
           fi
-        env:
-          GITHUB_ACTIONS: true  # Ensure this only fails in CI
+
+      - name: Run Self-Tests
+        run: make test
 
       - name: Ensure working tree is clean after build
         run: |
