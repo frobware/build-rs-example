@@ -1,6 +1,6 @@
 [package]
 name = "build-rs-example"
-version = "0.0.8"
+version = "0.0.9-pre"
 edition = "2021"
 
 [build-dependencies]
