@@ -1,0 +1,35 @@
+name: Verify Tag
+
+on:
+  push:
+    tags:
+      - "*"  # Runs only on tag pushes
+
+jobs:
+  verify-release-tag:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify Git Tag Matches Cargo Version
+        run: |
+          CARGO_VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          GIT_TAG=$(git describe --tags --exact-match || echo "untagged")
+          echo "Cargo.toml version: $CARGO_VERSION"
+          echo "Git tag: $GIT_TAG"
+          if [[ "$GIT_TAG" != "$CARGO_VERSION" ]]; then
+            echo "Error: Tag ($GIT_TAG) does not match Cargo.toml version ($CARGO_VERSION)!"
+            exit 1
+          fi
+
+      - name: Ensure working tree is clean after tag creation
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Error: Tagging process introduced uncommitted changes!"
+            git status
+            exit 1
+          fi
