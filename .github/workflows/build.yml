@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]  # Runs on all pushes to 'main'
+    branches: [main]
     tags:
-      - "*"           # Runs on all tags (no "v" required)
+      - "*"  # Runs on all tag pushes
   pull_request:
-    branches: [main]  # Runs on PRs targeting 'main'
-  workflow_dispatch:   # Allows manual execution
+    branches: [main]
+  workflow_dispatch:  # Allows manual execution
 
 jobs:
   build-and-test:
@@ -19,9 +19,6 @@ jobs:
           # https://github.com/actions/checkout/issues/1467
           fetch-depth: 0
           fetch-tags: true
-
-      - name: Show Git Describe Output
-        run: git describe --tags --always --dirty
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -39,21 +36,13 @@ jobs:
             echo "::warning file=Cargo.toml,line=1,col=1::Version mismatch! Cargo.toml ($CARGO_VERSION) does not match Git describe ($GIT_VERSION)"
           fi
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y jq
-      - name: Check Rust Formatting
-        run: cargo fmt --all -- --check
+      - name: Run Formatting, Clippy, and Build
+        run: make fmt clippy build
 
-      - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run Self-Tests
+        run: make test
 
-      - name: Run Cargo Build
-        run: cargo build --release
-
-      - name: Run Cargo Tests
-        run: cargo test --release --quiet
-
-      - name: Run Binary
+      - name: Run Binary and Verify Clean Build
         run: |
           output=$(cargo run --release --quiet)
           echo "Cargo output: $output"
@@ -61,9 +50,8 @@ jobs:
             echo "CI build should not be dirty!"
             exit 1
           fi
-
-      - name: Run Self-Tests
-        run: make test
+        env:
+          GITHUB_ACTIONS: true  # Ensure this only fails in CI
 
       - name: Ensure working tree is clean after build
         run: |
