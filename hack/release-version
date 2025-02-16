@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ ! -f "Cargo.toml" ]]; then
+    echo "Error: Cargo.toml not found. Run this script from the project root." >&2
+    exit 1
+fi
+
+# Ensure `cargo-edit` is installed (provides `cargo set-version`).
+if ! cargo set-version --help &>/dev/null; then
+    echo "Error: cargo set-version not found. Install with: cargo install cargo-edit." >&2
+    exit 1
+fi
+
+current_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+
+# Ensure version follows expected `X.Y.Z-pre` format.
+if [[ ! "$current_version" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)-pre$ ]]; then
+    echo "Error: Unexpected version format: $current_version (expected X.Y.Z-pre)." >&2
+    exit 1
+fi
+
+# Strip the `-pre` suffix to finalize the version.
+final_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+
+# Ensure a clean working tree before modifying Cargo.toml.
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "Error: Working directory is not clean. Commit or stash changes before proceeding." >&2
+    git status
+    # exit 1
+fi
+
+echo "Finalizing version: $current_version -> $final_version"
+cargo set-version "$final_version"
+
+# Run the full test suite before committing.
+echo "Running tests to verify the release build..."
+if ! make test; then
+    echo "Error: Version mismatch or test failure. Aborting release." >&2
+    exit 1
+fi
+
+# Commit the version bump.
+echo "Committing version bump..."
+git add Cargo.toml Cargo.lock
+git commit -m "Release $final_version"
+
+# Create an **annotated** Git tag with the release message.
+echo "Tagging release $final_version..."
+git tag -a "$final_version" -m "Release $final_version"
+
+echo -e "\nRelease $final_version finalized."
+echo -e "Now run:\n  git push --follow-tags"
