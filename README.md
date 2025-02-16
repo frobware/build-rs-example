@@ -25,7 +25,7 @@ The output format follows Rust's versioning style (`rustc --version`), structure
 
 ```sh
 $ cargo run --quiet
-build-rs-example 0.4.0-pre (e5dbc1d284-dirty 2025-02-15T22:35:44Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)
+build-rs-example 0.0.4-pre (e5dbc1d284-dirty 2025-02-15T22:35:44Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)
 ```
 - **Git commit hash included**: `e5dbc1d284`
 - **Dirty flag (`-dirty`)** if uncommitted changes exist
@@ -36,8 +36,8 @@ build-rs-example 0.4.0-pre (e5dbc1d284-dirty 2025-02-15T22:35:44Z) rustc 1.84.1 
 
 ```sh
 $ make test
-Got:     'build-rs-example 0.4.0-pre (2025-02-15T22:55:37Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)'
-Matched: 'build-rs-example 0.4.0-pre'
+Got:     'build-rs-example 0.0.4-pre (2025-02-15T22:55:37Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)'
+Matched: 'build-rs-example 0.0.4-pre'
 ```
 
 - **Git hash omitted** (not available)
