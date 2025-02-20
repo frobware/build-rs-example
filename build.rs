@@ -12,8 +12,9 @@
 //! - If Git is unavailable (e.g., tarball builds), Git info is omitted.
 //! - The build date and Rust version are always included.
 
-use chrono::Utc;
 use std::{env, process::Command};
+
+use chrono::Utc;
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
