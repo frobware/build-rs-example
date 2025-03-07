@@ -49,7 +49,7 @@ jobs:
 
       - name: Run Binary
         run: |
-          output=$(cargo run --release --quiet)
+          output=$(cargo run --release --quiet --bin main1)
           echo "Cargo output: $output"
           if echo "$output" | grep -q -- '-dirty'; then
             echo "CI build should not be dirty!"
