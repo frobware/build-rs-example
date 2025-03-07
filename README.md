@@ -27,9 +27,9 @@ The output format follows Rust's versioning style (`rustc --version`), structure
 $ cargo run --quiet --bin main1
 main1 0.0.15-pre (f4a3c814d9-dirty 2025-03-07T19:38:55Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)
 ```
-- **Git commit hash included**: `e5dbc1d284`
+- **Git commit hash included**: `f4a3c814d9`
 - **Dirty flag (`-dirty`)** if uncommitted changes exist
-- **Build timestamp**: `2025-02-15T22:09:48Z`
+- **Build timestamp**: `2025-03-07T19:38:55Z`
 - **Rust compiler version**: `rustc 1.84.1 (e71f9a9a9 2025-01-27)`
 
 #### When built from a tarball (i.e., no Git repository present)
