@@ -13,7 +13,7 @@ The `build.rs` script runs **before compilation** and sets a **single authoritat
 
 This version information is embedded into the final binary and displayed when run.
 
-## Versioning Behavior
+## Versioning Behaviour
 The output format follows Rust's versioning style (`rustc --version`), structured as:
 
 ```
@@ -24,20 +24,25 @@ The output format follows Rust's versioning style (`rustc --version`), structure
 #### When built inside a Git repository
 
 ```sh
-$ cargo run --quiet
-build-rs-example 0.0.4-pre (e5dbc1d284-dirty 2025-02-15T22:35:44Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)
+$ cargo run --quiet --bin main1
+main1 0.0.15-pre (f4a3c814d9-dirty 2025-03-07T19:38:55Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)
 ```
 - **Git commit hash included**: `e5dbc1d284`
 - **Dirty flag (`-dirty`)** if uncommitted changes exist
 - **Build timestamp**: `2025-02-15T22:09:48Z`
 - **Rust compiler version**: `rustc 1.84.1 (e71f9a9a9 2025-01-27)`
 
-#### When built from a tarball (no Git available)
+#### When built from a tarball (i.e., no Git repository present)
 
 ```sh
 $ make test
-Got:     'build-rs-example 0.0.4-pre (2025-02-15T22:55:37Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)'
-Matched: 'build-rs-example 0.0.4-pre'
+Got:     'main1 0.0.15-pre (2025-03-07T19:39:13Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)'
+Matched: 'main1 0.0.15-pre'
+
+...
+
+Got:     'main2 0.0.15-pre (2025-03-07T19:39:14Z) rustc 1.84.1 (e71f9a9a9 2025-01-27)'
+Matched: 'main2 0.0.15-pre'
 ```
 
 - **Git hash omitted** (not available)

@@ -13,11 +13,13 @@ build:
 	cargo build --release
 
 run:
-	cargo run --release --quiet
+	cargo run --release --quiet --bin main1
+	cargo run --release --quiet --bin main2
 
 # Self-test: Extract, build, and check version output.
 test: clippy tarball
-	./test.sh $(TARBALL) "build-rs-example $(VERSION)"
+	./test.sh $(TARBALL) "main1 $(VERSION)"
+	./test.sh $(TARBALL) "main2 $(VERSION)"
 
 # Create a versioned tarball, excluding unnecessary files. We don't
 # use `git archive` because, in development, we want to pick up

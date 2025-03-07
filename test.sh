@@ -25,7 +25,7 @@ cd "$testdir"
 # containing stale build artefacts.
 cargo clean
 
-if ! got=$(cargo run); then
+if ! got=$(cargo run --bin ${2%% *}); then
     exit 1;
 fi
 
