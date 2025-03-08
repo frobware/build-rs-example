@@ -4,7 +4,7 @@ TARBALL := $(shell mktemp --tmpdir build-rs-example-$(VERSION)-XXXXXXXX.tar)
 all: fmt clippy build run test
 
 fmt:
-	cargo fmt --all -- --check
+	cargo +nightly fmt --all -- --check
 
 clippy:
 	cargo clippy --all-targets --all-features -- -D warnings
